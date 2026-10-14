@@ -32,6 +32,8 @@ android {
         release {
             // TODO: replace with a real signing config before Play Store release.
             signingConfig = signingConfigs.getByName("debug")
+            // On-device models need a 64-bit ARM CPU; skip 32-bit/x86 libs to keep the APK small.
+            ndk { abiFilters += listOf("arm64-v8a") }
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
