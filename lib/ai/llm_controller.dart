@@ -49,6 +49,17 @@ class LlmController extends Notifier<LlmStatus> {
     return const LlmStatus();
   }
 
+  /// The model only if it is already in memory. Never triggers a load: used from the background,
+  /// where loading a 1-2 GB model could get the app killed on a low-RAM phone.
+  LlmBackend? get loadedOrNull {
+    final spec = _chosen;
+    if (_local != null && spec != null && _loadedSpec?.id == spec.id) {
+      _touch();
+      return _local;
+    }
+    return null;
+  }
+
   ModelSpec? get _chosen =>
       ModelCatalog.byId(ref.read(settingsProvider).modelId);
 

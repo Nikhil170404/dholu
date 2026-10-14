@@ -32,6 +32,11 @@ class IngestService {
   final void Function()? onChanged;
   final DateTime Function() _now;
 
+  /// Same sender urgent again within this window is stored but does not re-alert
+  /// (chat apps re-post one conversation many times).
+  static const urgentCooldown = Duration(minutes: 2);
+  final _lastUrgent = <String, DateTime>{};
+
   final _urgent = StreamController<StoredEvent>.broadcast();
   StreamSubscription<RawNotification>? _sub;
   final _refineQueue = <int>[];
@@ -82,7 +87,7 @@ class IngestService {
     );
     final isImportantApp = important.contains(n.pkg);
     if (live && isImportantApp && c.priority == Priority.urgent) {
-      _urgent.add(stored);
+      _alertOnce(stored);
     } else if (isImportantApp &&
         useAi &&
         localLlm != null &&
@@ -91,6 +96,16 @@ class IngestService {
       unawaited(_drainRefine(live: live));
     }
     return stored;
+  }
+
+  void _alertOnce(StoredEvent e) {
+    final key = '${e.pkg}|${e.sender.toLowerCase()}';
+    final last = _lastUrgent[key];
+    if (last != null && _now().difference(last) < urgentCooldown) {
+      return;
+    }
+    _lastUrgent[key] = _now();
+    _urgent.add(e);
   }
 
   /// One at a time: on-device inference is slow on cheap phones.
@@ -128,7 +143,7 @@ class IngestService {
         if (live && better.priority == Priority.urgent) {
           final updated = await repo.byId(id);
           if (updated != null) {
-            _urgent.add(updated);
+            _alertOnce(updated);
           }
         }
       }

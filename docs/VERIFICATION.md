@@ -3,7 +3,7 @@
 Built in a Linux container with no Android SDK, no device, and no access to Hugging Face / dl.google.com.
 
 ## Verified (automated)
-- `flutter analyze`: no issues. `flutter test`: **118 tests pass**.
+- `flutter analyze`: no issues. `flutter test`: **122 tests pass**.
 - Domain: OTP/bank/password redaction (incl. a punctuation bug the tests caught), EN/HI/Hinglish scoring, due dates,
   grouping, digest, 7-day purge, privacy rules in the repository (text only for important apps, OTP never stored).
 - Pipelines with fakes: ingest (live + offline queue), AI refinement, urgent routing (foreground vs background),

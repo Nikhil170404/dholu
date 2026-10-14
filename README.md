@@ -33,7 +33,7 @@ short list of what matters, with one-tap actions that open the right app. A smal
 flutter pub get
 dart run build_runner build --delete-conflicting-outputs   # only after editing lib/data/database.dart
 flutter run                                                # Android 7+ (API 24), arm64 for the AI models
-flutter test                                               # 118 tests
+flutter test                                               # 122 tests
 ```
 
 Release: `flutter build apk --release --split-per-abi` or `flutter build appbundle --release`.

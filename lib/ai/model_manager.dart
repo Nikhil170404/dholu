@@ -143,14 +143,24 @@ class BackgroundModelDownloader implements ModelDownloader {
 
   @override
   Future<void> pause(String taskId) async {
-    final t = _tasks[taskId];
-    if (t != null) await FileDownloader().pause(t);
+    final t = await _taskFor(taskId);
+    if (t != null) {
+      await FileDownloader().pause(t);
+    }
   }
 
   @override
   Future<void> resume(String taskId) async {
-    final t = _tasks[taskId];
-    if (t != null) await FileDownloader().resume(t);
+    final t = await _taskFor(taskId);
+    if (t != null) {
+      await FileDownloader().resume(t);
+    }
+  }
+
+  /// The task from this session, or one recovered from the downloader after an app restart.
+  Future<DownloadTask?> _taskFor(String taskId) async {
+    final t = _tasks[taskId] ?? await FileDownloader().taskForId(taskId);
+    return t is DownloadTask ? t : null;
   }
 
   @override
@@ -297,8 +307,15 @@ class ModelManager extends Notifier<Map<String, ModelInstall>> {
 
   Future<void> _onUpdate(DlUpdate u) async {
     final id = u.taskId;
-    final cur = state[id];
-    if (cur == null) return;
+    // After an app restart a download may still be running with no state in memory: adopt it.
+    final cur =
+        state[id] ??
+        (ModelCatalog.byId(id) != null
+            ? const ModelInstall(status: InstallStatus.downloading)
+            : null);
+    if (cur == null) {
+      return;
+    }
     switch (u.state) {
       case DlState.running:
         if (cur.status == InstallStatus.paused) return;
@@ -321,8 +338,10 @@ class ModelManager extends Notifier<Map<String, ModelInstall>> {
   }
 
   Future<void> _finish(String id) async {
-    final spec = _specs[id];
-    if (spec == null) return;
+    final spec = _specs[id] ?? ModelCatalog.byId(id);
+    if (spec == null) {
+      return;
+    }
     _set(
       id,
       (state[id] ?? const ModelInstall()).copyWith(

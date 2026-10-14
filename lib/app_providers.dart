@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart' show AppLifecycleState, WidgetsBinding;
 
 import 'package:go_router/go_router.dart';
 
@@ -61,7 +62,13 @@ final ingestProvider = Provider<IngestService>((ref) {
     repo: ref.watch(repositoryProvider),
     lang: lang,
     useAi: useAi,
-    localLlm: () => ref.read(llmControllerProvider.notifier).local(),
+    localLlm: () async {
+      final ctl = ref.read(llmControllerProvider.notifier);
+      final state = WidgetsBinding.instance.lifecycleState;
+      final foreground = state == null || state == AppLifecycleState.resumed;
+      // Load on demand only while the user has the app open; otherwise use it only if already loaded.
+      return foreground ? ctl.local() : ctl.loadedOrNull;
+    },
     onChanged: () => ref.read(changeTickProvider.notifier).bump(),
   );
   ref.onDispose(svc.dispose);
