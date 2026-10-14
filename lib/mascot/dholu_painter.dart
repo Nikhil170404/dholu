@@ -1,5 +1,7 @@
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+
 import '../theme/tokens.dart';
 
 enum DholuPose { idle, drumRoll, peek, happy, muted }
@@ -62,18 +64,34 @@ class DholuPainter extends CustomPainter {
     };
 
     // Antenna + dot.
-    canvas.drawLine(const Offset(60, 22), const Offset(60, 11), _stroke(DColors.ink, 3));
+    canvas.drawLine(
+      const Offset(60, 22),
+      const Offset(60, 11),
+      _stroke(DColors.ink, 3),
+    );
     canvas.drawCircle(const Offset(60, 8), 5 * dotPulse, _fill(dotColor));
 
     // Feet.
-    canvas.drawOval(Rect.fromCenter(center: const Offset(42, 104), width: 24, height: 12), _fill(DColors.accentDark));
-    canvas.drawOval(Rect.fromCenter(center: const Offset(78, 104), width: 24, height: 12), _fill(DColors.accentDark));
+    canvas.drawOval(
+      Rect.fromCenter(center: const Offset(42, 104), width: 24, height: 12),
+      _fill(DColors.accentDark),
+    );
+    canvas.drawOval(
+      Rect.fromCenter(center: const Offset(78, 104), width: 24, height: 12),
+      _fill(DColors.accentDark),
+    );
 
     if (pose == DholuPose.drumRoll) _drum(canvas);
 
     // Body + face plate.
-    canvas.drawRRect(RRect.fromRectXY(const Rect.fromLTWH(16, 20, 88, 82), 40, 40), _fill(DColors.accent));
-    canvas.drawRRect(RRect.fromRectXY(const Rect.fromLTWH(27, 36, 66, 52), 26, 26), _fill(DColors.facePlate));
+    canvas.drawRRect(
+      RRect.fromRectXY(const Rect.fromLTWH(16, 20, 88, 82), 40, 40),
+      _fill(DColors.accent),
+    );
+    canvas.drawRRect(
+      RRect.fromRectXY(const Rect.fromLTWH(27, 36, 66, 52), 26, 26),
+      _fill(DColors.facePlate),
+    );
 
     _face(canvas);
 
@@ -90,7 +108,9 @@ class DholuPainter extends CustomPainter {
   void _face(Canvas canvas) {
     final alert = pose == DholuPose.drumRoll;
     final eyeR = alert ? 9.0 : 8.0;
-    final dx = pose == DholuPose.peek ? lookX - 3 : lookX; // peek looks toward the screen (left)
+    final dx = pose == DholuPose.peek
+        ? lookX - 3
+        : lookX; // peek looks toward the screen (left)
     final lx = 46 + dx, rx = 74 + dx;
 
     // Cheeks.
@@ -101,7 +121,9 @@ class DholuPainter extends CustomPainter {
       case DholuPose.happy:
         // Eyes as arcs.
         for (final x in [46.0, 74.0]) {
-          final p = Path()..moveTo(x - 8, 60)..quadraticBezierTo(x, 48, x + 8, 60);
+          final p = Path()
+            ..moveTo(x - 8, 60)
+            ..quadraticBezierTo(x, 48, x + 8, 60);
           canvas.drawPath(p, _stroke(DColors.ink, 3.5));
         }
         // Open smile with tongue.
@@ -112,13 +134,24 @@ class DholuPainter extends CustomPainter {
         canvas.drawPath(mouth, _fill(DColors.ink));
         canvas.save();
         canvas.clipPath(mouth);
-        canvas.drawOval(Rect.fromCenter(center: const Offset(60, 80), width: 12, height: 9), _fill(DColors.cheek));
+        canvas.drawOval(
+          Rect.fromCenter(center: const Offset(60, 80), width: 12, height: 9),
+          _fill(DColors.cheek),
+        );
         canvas.restore();
       case DholuPose.muted:
         for (final x in [46.0, 74.0]) {
-          canvas.drawLine(Offset(x - 7, 58), Offset(x + 7, 58), _stroke(DColors.ink, 3));
+          canvas.drawLine(
+            Offset(x - 7, 58),
+            Offset(x + 7, 58),
+            _stroke(DColors.ink, 3),
+          );
         }
-        canvas.drawLine(const Offset(53, 76), const Offset(67, 76), _stroke(DColors.ink, 3));
+        canvas.drawLine(
+          const Offset(53, 76),
+          const Offset(67, 76),
+          _stroke(DColors.ink, 3),
+        );
       default:
         final open = 1 - blink;
         for (final x in [lx, rx]) {
@@ -134,9 +167,18 @@ class DholuPainter extends CustomPainter {
           canvas.drawCircle(Offset(rx + 2.5, 55.5), 2.5, glint);
         }
         if (alert) {
-          canvas.drawOval(Rect.fromCenter(center: const Offset(60, 76), width: 10, height: 12), _ink);
+          canvas.drawOval(
+            Rect.fromCenter(
+              center: const Offset(60, 76),
+              width: 10,
+              height: 12,
+            ),
+            _ink,
+          );
         } else {
-          final smile = Path()..moveTo(52, 72)..quadraticBezierTo(60, 80, 68, 72);
+          final smile = Path()
+            ..moveTo(52, 72)
+            ..quadraticBezierTo(60, 80, 68, 72);
           canvas.drawPath(smile, _stroke(DColors.ink, 3));
         }
     }
@@ -144,9 +186,15 @@ class DholuPainter extends CustomPainter {
 
   void _drum(Canvas canvas) {
     // Drum below the body.
-    final body = RRect.fromRectAndRadius(const Rect.fromLTWH(28, 96, 64, 30), const Radius.circular(6));
+    final body = RRect.fromRectAndRadius(
+      const Rect.fromLTWH(28, 96, 64, 30),
+      const Radius.circular(6),
+    );
     canvas.drawRRect(body, _fill(DColors.drum));
-    canvas.drawOval(Rect.fromCenter(center: const Offset(60, 96), width: 64, height: 12), _fill(DColors.drumLight));
+    canvas.drawOval(
+      Rect.fromCenter(center: const Offset(60, 96), width: 64, height: 12),
+      _fill(DColors.drumLight),
+    );
     // Two sticks, rotated about the hand points; hands drawn on top.
     _stick(canvas, const Offset(14, 72), leftStick, flip: false);
     _stick(canvas, const Offset(106, 72), rightStick, flip: true);
@@ -167,12 +215,14 @@ class DholuPainter extends CustomPainter {
     final t = zFloat;
     final tp = TextPainter(
       text: TextSpan(
-          text: 'z',
-          style: TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 14 + 4 * t,
-              fontWeight: FontWeight.w700,
-              color: DColors.muted.withValues(alpha: 1 - t))),
+        text: 'z',
+        style: TextStyle(
+          fontFamily: 'PlusJakartaSans',
+          fontSize: 14 + 4 * t,
+          fontWeight: FontWeight.w700,
+          color: DColors.muted.withValues(alpha: 1 - t),
+        ),
+      ),
       textDirection: TextDirection.ltr,
     )..layout();
     tp.paint(canvas, Offset(96 + 6 * t, 18 - 14 * t));
@@ -180,7 +230,11 @@ class DholuPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(DholuPainter o) =>
-      o.pose != pose || o.blink != blink || o.leftStick != leftStick ||
-      o.rightStick != rightStick || o.dotPulse != dotPulse ||
-      o.lookX != lookX || o.zFloat != zFloat;
+      o.pose != pose ||
+      o.blink != blink ||
+      o.leftStick != leftStick ||
+      o.rightStick != rightStick ||
+      o.dotPulse != dotPulse ||
+      o.lookX != lookX ||
+      o.zFloat != zFloat;
 }

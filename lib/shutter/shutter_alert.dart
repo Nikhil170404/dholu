@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../mascot/dholu_widget.dart';
 import '../theme/theme.dart';
 import '../theme/tokens.dart';
@@ -31,13 +32,18 @@ class ShutterAlert extends StatefulWidget {
   State<ShutterAlert> createState() => _ShutterAlertState();
 }
 
-class _ShutterAlertState extends State<ShutterAlert> with SingleTickerProviderStateMixin {
+class _ShutterAlertState extends State<ShutterAlert>
+    with SingleTickerProviderStateMixin {
   static const _total = 5.0; // seconds
-  static const _unroll = 0.8, _reveal = 0.4, _hold = 3.0; // roll-up = remainder (0.8)
+  static const _unroll = 0.8,
+      _reveal = 0.4,
+      _hold = 3.0; // roll-up = remainder (0.8)
   static const _cardHeight = 152.0;
 
-  late final AnimationController _c =
-      AnimationController(vsync: this, duration: const Duration(milliseconds: 5000));
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 5000),
+  );
 
   double get _rollStart => (_unroll + _reveal + _hold) / _total;
 
@@ -74,7 +80,9 @@ class _ShutterAlertState extends State<ShutterAlert> with SingleTickerProviderSt
       builder: (context, _) {
         final down = Curves.easeInOut.transform(_seg(0, _unroll));
         final reveal = Curves.easeInOut.transform(_seg(_unroll, _reveal));
-        final up = Curves.easeInOut.transform(_seg(_unroll + _reveal + _hold, _total - _unroll - _reveal - _hold));
+        final up = Curves.easeInOut.transform(
+          _seg(_unroll + _reveal + _hold, _total - _unroll - _reveal - _hold),
+        );
         final open = down * (1 - up);
         final slats = (1 - reveal);
         // Dholu slides in just after the shutter lands, out with the roll-up.
@@ -103,14 +111,24 @@ class _ShutterAlertState extends State<ShutterAlert> with SingleTickerProviderSt
                       alignment: Alignment.bottomCenter,
                       minHeight: _cardHeight,
                       maxHeight: _cardHeight,
-                      child: Stack(children: [
-                        Positioned.fill(child: _Card(title: widget.title, source: widget.source)),
-                        Positioned.fill(
-                          child: IgnorePointer(
-                            child: Opacity(opacity: slats, child: const _Slats()),
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                            child: _Card(
+                              title: widget.title,
+                              source: widget.source,
+                            ),
                           ),
-                        ),
-                      ]),
+                          Positioned.fill(
+                            child: IgnorePointer(
+                              child: Opacity(
+                                opacity: slats,
+                                child: const _Slats(),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -152,29 +170,62 @@ class _Card extends StatelessWidget {
   final String title, source;
   @override
   Widget build(BuildContext context) => Container(
-        margin: const EdgeInsets.fromLTRB(0, 0, 0, 0),
-        padding: const EdgeInsets.fromLTRB(20, 36, 20, 20),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(DRadius.feature)),
-          boxShadow: [BoxShadow(color: Color(0x330B1220), blurRadius: 18, offset: Offset(0, 6))],
+    margin: const EdgeInsets.fromLTRB(0, 0, 0, 0),
+    padding: const EdgeInsets.fromLTRB(20, 36, 20, 20),
+    decoration: const BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.vertical(
+        bottom: Radius.circular(DRadius.feature),
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: Color(0x330B1220),
+          blurRadius: 18,
+          offset: Offset(0, 6),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          crossAxisAlignment: CrossAxisAlignment.start,
+      ],
+    ),
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
           children: [
-            Row(children: [
-              Container(width: 8, height: 8, decoration: const BoxDecoration(color: DColors.urgentDot, shape: BoxShape.circle)),
-              const SizedBox(width: 8),
-              Text('ZAROORI  ·  $source', style: DText.caption.copyWith(letterSpacing: 0.6, fontWeight: FontWeight.w700)),
-            ]),
-            const SizedBox(height: 6),
-            Text(title, style: DText.heading, maxLines: 2, overflow: TextOverflow.ellipsis),
-            const SizedBox(height: 4),
-            Text('Tap karke dekho  ·  upar swipe karo band karne ke liye', style: DText.caption, maxLines: 1, overflow: TextOverflow.ellipsis),
+            Container(
+              width: 8,
+              height: 8,
+              decoration: const BoxDecoration(
+                color: DColors.urgentDot,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'ZAROORI  ·  $source',
+              style: DText.caption.copyWith(
+                letterSpacing: 0.6,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ],
         ),
-      );
+        const SizedBox(height: 6),
+        Text(
+          title,
+          style: DText.heading,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Tap karke dekho  ·  upar swipe karo band karne ke liye',
+          style: DText.caption,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    ),
+  );
 }
 
 /// Dark roller-shutter slats.
@@ -187,15 +238,24 @@ class _Slats extends StatelessWidget {
 class _SlatPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final r = RRect.fromRectAndCorners(Offset.zero & size,
-        bottomLeft: const Radius.circular(DRadius.feature), bottomRight: const Radius.circular(DRadius.feature));
+    final r = RRect.fromRectAndCorners(
+      Offset.zero & size,
+      bottomLeft: const Radius.circular(DRadius.feature),
+      bottomRight: const Radius.circular(DRadius.feature),
+    );
     canvas.save();
     canvas.clipRRect(r);
     canvas.drawRect(Offset.zero & size, Paint()..color = DColors.ink);
     const slat = 14.0;
     for (double y = 0; y < size.height; y += slat) {
-      canvas.drawRect(Rect.fromLTWH(0, y, size.width, 1.5), Paint()..color = const Color(0xFF26324A));
-      canvas.drawRect(Rect.fromLTWH(0, y + 1.5, size.width, 3), Paint()..color = const Color(0xFF16203A));
+      canvas.drawRect(
+        Rect.fromLTWH(0, y, size.width, 1.5),
+        Paint()..color = const Color(0xFF26324A),
+      );
+      canvas.drawRect(
+        Rect.fromLTWH(0, y + 1.5, size.width, 3),
+        Paint()..color = const Color(0xFF16203A),
+      );
     }
     canvas.restore();
   }

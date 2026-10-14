@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
+
 import 'dholu_widget.dart';
 
 /// Dholu peeking from the right screen edge. 6 s loop: hidden 0-25%, slides to
 /// ~72% visible at 40-75%, hides by 90%. Tap opens the Drum alert.
 class CornerPeek extends StatefulWidget {
-  const CornerPeek({super.key, this.onTap, this.size = 88, this.animate = true});
+  const CornerPeek({
+    super.key,
+    this.onTap,
+    this.size = 88,
+    this.animate = true,
+  });
   final VoidCallback? onTap;
   final double size;
   final bool animate;
@@ -13,14 +19,29 @@ class CornerPeek extends StatefulWidget {
   State<CornerPeek> createState() => _CornerPeekState();
 }
 
-class _CornerPeekState extends State<CornerPeek> with SingleTickerProviderStateMixin {
-  late final AnimationController _c =
-      AnimationController(vsync: this, duration: const Duration(seconds: 6));
+class _CornerPeekState extends State<CornerPeek>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 6),
+  );
   static final _slide = TweenSequence<double>([
     TweenSequenceItem(tween: ConstantTween(0.0), weight: 25),
-    TweenSequenceItem(tween: Tween(begin: 0.0, end: 0.72).chain(CurveTween(curve: Curves.easeOut)), weight: 15),
+    TweenSequenceItem(
+      tween: Tween(
+        begin: 0.0,
+        end: 0.72,
+      ).chain(CurveTween(curve: Curves.easeOut)),
+      weight: 15,
+    ),
     TweenSequenceItem(tween: ConstantTween(0.72), weight: 35),
-    TweenSequenceItem(tween: Tween(begin: 0.72, end: 0.0).chain(CurveTween(curve: Curves.easeIn)), weight: 15),
+    TweenSequenceItem(
+      tween: Tween(
+        begin: 0.72,
+        end: 0.0,
+      ).chain(CurveTween(curve: Curves.easeIn)),
+      weight: 15,
+    ),
     TweenSequenceItem(tween: ConstantTween(0.0), weight: 10),
   ]);
 
@@ -57,7 +78,11 @@ class _CornerPeekState extends State<CornerPeek> with SingleTickerProviderStateM
         child: Semantics(
           button: true,
           label: 'Dholu',
-          child: Dholu(pose: DholuPose.peek, size: widget.size, animate: widget.animate),
+          child: Dholu(
+            pose: DholuPose.peek,
+            size: widget.size,
+            animate: widget.animate,
+          ),
         ),
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
 import '../theme/theme.dart';
 import '../theme/tokens.dart';
 import '../ui/choose_apps_screen.dart';
@@ -37,10 +38,17 @@ class GalleryScreen extends StatelessWidget {
   ];
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text('Dholu gallery'), backgroundColor: DColors.ground, surfaceTintColor: Colors.transparent),
-        body: ListView(padding: const EdgeInsets.all(DSpace.screen), children: [
-          DCard(
-            child: Column(children: [
+    appBar: AppBar(
+      title: const Text('Dholu gallery'),
+      backgroundColor: DColors.ground,
+      surfaceTintColor: Colors.transparent,
+    ),
+    body: ListView(
+      padding: const EdgeInsets.all(DSpace.screen),
+      children: [
+        DCard(
+          child: Column(
+            children: [
               for (var i = 0; i < _items.length; i++) ...[
                 if (i > 0) const Divider(),
                 ListTile(
@@ -50,8 +58,10 @@ class GalleryScreen extends StatelessWidget {
                   onTap: () => context.push(_items[i].$2),
                 ),
               ],
-            ]),
+            ],
           ),
-        ]),
-      );
+        ),
+      ],
+    ),
+  );
 }

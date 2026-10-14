@@ -9,7 +9,9 @@ import 'package:dholu/ui/home_screen.dart';
 import 'package:dholu/ui/loaders.dart';
 import 'package:dholu/ui/tips_screen.dart';
 
-Widget wrap(Widget w) => ProviderScope(child: MaterialApp(theme: buildTheme(), home: w));
+Widget wrap(Widget w) => ProviderScope(
+  child: MaterialApp(theme: buildTheme(), home: w),
+);
 
 void main() {
   testWidgets('home shows urgent card and hidden count', (t) async {
@@ -21,7 +23,9 @@ void main() {
 
   testWidgets('choose apps toggles important state', (t) async {
     await t.pumpWidget(wrap(const ChooseAppsScreen()));
-    final container = ProviderScope.containerOf(t.element(find.byType(ChooseAppsScreen)));
+    final container = ProviderScope.containerOf(
+      t.element(find.byType(ChooseAppsScreen)),
+    );
     final before = container.read(importantAppsProvider).length;
     await t.tap(find.byType(Switch).at(4));
     await t.pump();
@@ -36,10 +40,18 @@ void main() {
 
   testWidgets('shutter alert plays once and reports finished', (t) async {
     var done = false;
-    await t.pumpWidget(wrap(Align(
-      alignment: Alignment.topCenter,
-      child: ShutterAlert(title: 'Test', source: 'WhatsApp', onFinished: () => done = true),
-    )));
+    await t.pumpWidget(
+      wrap(
+        Align(
+          alignment: Alignment.topCenter,
+          child: ShutterAlert(
+            title: 'Test',
+            source: 'WhatsApp',
+            onFinished: () => done = true,
+          ),
+        ),
+      ),
+    );
     await t.pump(const Duration(milliseconds: 2000));
     expect(find.text('Test'), findsOneWidget);
     expect(done, isFalse);
@@ -49,13 +61,22 @@ void main() {
 
   testWidgets('shutter alert swipe-up dismisses early', (t) async {
     var done = false;
-    await t.pumpWidget(wrap(Align(
-      alignment: Alignment.topCenter,
-      child: ShutterAlert(title: 'Test', source: 'WhatsApp', onFinished: () => done = true),
-    )));
+    await t.pumpWidget(
+      wrap(
+        Align(
+          alignment: Alignment.topCenter,
+          child: ShutterAlert(
+            title: 'Test',
+            source: 'WhatsApp',
+            onFinished: () => done = true,
+          ),
+        ),
+      ),
+    );
     await t.pump(const Duration(milliseconds: 1800));
     await t.fling(find.text('Test'), const Offset(0, -150), 800);
-    await t.pump(); await t.pump(const Duration(milliseconds: 1200));
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 1200));
     expect(done, isTrue);
   });
 
