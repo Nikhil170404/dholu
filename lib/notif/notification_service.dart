@@ -77,7 +77,23 @@ class NotifPayload {
 
 typedef NotifTapHandler = void Function(String? payload, String? actionId);
 
-class NotificationService {
+/// What the app needs from the notification layer (lets tests swap in a recorder).
+abstract class AppNotifier {
+  Future<void> init(Tr tr, {NotifTapHandler? onTap});
+  Future<bool> requestPermission();
+  Future<String?> launchPayload();
+  Future<void> showDigest(Digest d, Tr tr, {required bool detail});
+  Future<void> showUrgent(
+    StoredEvent e,
+    Tr tr, {
+    required bool detail,
+    required bool sound,
+  });
+  Future<void> showReminder(StoredEvent e, Tr tr);
+  Future<void> cancelFor(int eventId);
+}
+
+class NotificationService implements AppNotifier {
   NotificationService([FlutterLocalNotificationsPlugin? plugin])
     : _p = plugin ?? FlutterLocalNotificationsPlugin();
   final FlutterLocalNotificationsPlugin _p;
@@ -89,6 +105,7 @@ class NotificationService {
   static const digestId = 1;
   static const _color = Color(0xFF2F4BDB);
 
+  @override
   Future<void> init(
     Tr tr, {
     NotifTapHandler? onTap,
@@ -140,6 +157,7 @@ class NotificationService {
     );
   }
 
+  @override
   Future<bool> requestPermission() async {
     final a = _p
         .resolvePlatformSpecificImplementation<
@@ -148,6 +166,7 @@ class NotificationService {
     return await a?.requestNotificationsPermission() ?? false;
   }
 
+  @override
   Future<String?> launchPayload() async {
     final d = await _p.getNotificationAppLaunchDetails();
     return d?.didNotificationLaunchApp == true
@@ -155,6 +174,7 @@ class NotificationService {
         : null;
   }
 
+  @override
   Future<void> showDigest(Digest d, Tr tr, {required bool detail}) {
     final c = buildDigestContent(d, tr, detail: detail);
     return _p.show(
@@ -184,6 +204,7 @@ class NotificationService {
     );
   }
 
+  @override
   Future<void> showUrgent(
     StoredEvent e,
     Tr tr, {
@@ -220,6 +241,7 @@ class NotificationService {
     );
   }
 
+  @override
   Future<void> showReminder(StoredEvent e, Tr tr) => _p.show(
     id: 200000 + e.id % 100000,
     title: tr('remind_title'),
@@ -236,5 +258,6 @@ class NotificationService {
     ),
   );
 
+  @override
   Future<void> cancelFor(int eventId) => _p.cancel(id: 1000 + eventId % 100000);
 }

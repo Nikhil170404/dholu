@@ -1,30 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../app_providers.dart';
 import '../mascot/dholu_widget.dart';
+import '../settings/settings.dart';
 import '../theme/theme.dart';
 import '../theme/tokens.dart';
 import 'loaders.dart';
 
 /// Screen 1: Loading. Drumming Dholu, app name, progress bar, 3 steps (last spins).
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key, this.autoAdvance = true});
   final bool autoAdvance;
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
+class _SplashScreenState extends ConsumerState<SplashScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _c = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 3600),
+    duration: const Duration(milliseconds: 2600),
   );
-  static const _steps = [
-    'Apps jaanch rahe hain',
-    'Zaroori chun rahe hain',
-    'Summary ban raha hai',
-  ];
 
   @override
   void initState() {
@@ -32,7 +30,9 @@ class _SplashScreenState extends State<SplashScreen>
     _c.forward();
     if (widget.autoAdvance) {
       _c.addStatusListener((s) {
-        if (s == AnimationStatus.completed && mounted) context.go('/tips');
+        if (s == AnimationStatus.completed && mounted) {
+          context.go(ref.read(settingsProvider).onboarded ? '/home' : '/tips');
+        }
       });
     }
   }
@@ -45,6 +45,8 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final tr = ref.watch(trProvider);
+    final steps = [tr('step1'), tr('step2'), tr('step3')];
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -56,10 +58,7 @@ class _SplashScreenState extends State<SplashScreen>
               const SizedBox(height: 20),
               const Text('Dholu', style: DText.title),
               const SizedBox(height: 6),
-              const Text(
-                'Aapka summary tayyar ho raha hai',
-                style: DText.caption,
-              ),
+              Text(tr('splash_sub'), style: DText.caption),
               const SizedBox(height: 32),
               AnimatedBuilder(
                 animation: _c,
@@ -67,8 +66,8 @@ class _SplashScreenState extends State<SplashScreen>
                   children: [
                     ProgressBar(value: _c.value),
                     const SizedBox(height: 24),
-                    for (var i = 0; i < _steps.length; i++)
-                      _Step(label: _steps[i], state: _stateFor(i)),
+                    for (var i = 0; i < steps.length; i++)
+                      _Step(label: steps[i], state: _stateFor(i)),
                   ],
                 ),
               ),
@@ -80,15 +79,17 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 
-  /// Steps complete at 1/3 and 2/3; the last one spins until the end.
   _StepState _stateFor(int i) {
     final v = _c.value;
     if (i == 2) {
-      if (v >= 1) return _StepState.done;
+      if (v >= 1) {
+        return _StepState.done;
+      }
       return v >= 2 / 3 ? _StepState.running : _StepState.waiting;
     }
-    final doneAt = (i + 1) / 3;
-    if (v >= doneAt) return _StepState.done;
+    if (v >= (i + 1) / 3) {
+      return _StepState.done;
+    }
     return v >= i / 3 ? _StepState.running : _StepState.waiting;
   }
 }

@@ -89,6 +89,7 @@ class LocalLlm extends LlmBackend {
     }
   }
 
+  @override
   void cancel() => _engine.cancelGeneration();
 
   @override

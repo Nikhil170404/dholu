@@ -2,27 +2,53 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../data/fake_data.dart';
-import '../data/providers.dart';
+import '../app_providers.dart';
+import '../native/native_bridge.dart';
 import '../theme/theme.dart';
 import '../theme/tokens.dart';
+import 'app_icon.dart';
 import 'widgets.dart';
 
+/// Installed launchable apps, synced into the DB (user choices are kept).
+final installedAppsSyncProvider = FutureProvider<void>((ref) async {
+  final apps = await ref.watch(nativeBridgeProvider).installedApps();
+  await ref.watch(repositoryProvider).syncApps(apps);
+});
+
 /// Screen 7: Choose important apps.
-class ChooseAppsScreen extends ConsumerWidget {
-  const ChooseAppsScreen({super.key});
+class ChooseAppsScreen extends ConsumerStatefulWidget {
+  const ChooseAppsScreen({super.key, this.first = false});
+  final bool first;
+  @override
+  ConsumerState<ChooseAppsScreen> createState() => _ChooseAppsScreenState();
+}
+
+class _ChooseAppsScreenState extends ConsumerState<ChooseAppsScreen> {
+  String _q = '';
+
+  void _finish() {
+    if (widget.first || !context.canPop()) {
+      context.go('/home');
+    } else {
+      context.pop();
+    }
+  }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final on = ref.watch(importantAppsProvider);
+  Widget build(BuildContext context) {
+    final tr = ref.watch(trProvider);
+    ref.watch(installedAppsSyncProvider);
+    final apps = ref.watch(appPrefsProvider).asData?.value ?? const [];
+    final shown = apps
+        .where((a) => a.name.toLowerCase().contains(_q.toLowerCase()))
+        .toList();
+    final selected = apps.where((a) => a.important).length;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: DColors.ground,
         surfaceTintColor: Colors.transparent,
-        leading: BackButton(
-          onPressed: () =>
-              context.canPop() ? context.pop() : context.go('/home'),
-        ),
+        leading: widget.first ? null : BackButton(onPressed: _finish),
+        automaticallyImplyLeading: !widget.first,
       ),
       body: Column(
         children: [
@@ -30,56 +56,90 @@ class ChooseAppsScreen extends ConsumerWidget {
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: DSpace.screen),
               children: [
-                const Text('Kaun se apps zaroori hain?', style: DText.title),
+                Text(tr('apps_title'), style: DText.title),
                 const SizedBox(height: 6),
-                Text('${on.length} apps chune gaye', style: DText.caption),
+                Text(
+                  tr('apps_selected', {'n': selected}),
+                  style: DText.caption,
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  onChanged: (v) => setState(() => _q = v),
+                  decoration: InputDecoration(
+                    hintText: tr('search_apps'),
+                    prefixIcon: const Icon(Icons.search_rounded),
+                    filled: true,
+                    fillColor: DColors.card,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(DRadius.button),
+                      borderSide: const BorderSide(color: DColors.border),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(DRadius.button),
+                      borderSide: const BorderSide(color: DColors.border),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: DSpace.section),
-                DCard(
-                  child: Column(
-                    children: [
-                      for (var i = 0; i < fakeApps.length; i++) ...[
-                        if (i > 0) const Divider(indent: 66),
-                        MergeSemantics(
-                          child: InkWell(
-                            onTap: () => ref
-                                .read(importantAppsProvider.notifier)
-                                .toggle(
-                                  fakeApps[i].pkg,
-                                  !on.contains(fakeApps[i].pkg),
+                if (shown.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Center(
+                      child: Text(tr('no_apps'), style: DText.caption),
+                    ),
+                  )
+                else
+                  DCard(
+                    child: Column(
+                      children: [
+                        for (var i = 0; i < shown.length; i++) ...[
+                          if (i > 0) const Divider(indent: 66),
+                          MergeSemantics(
+                            child: InkWell(
+                              onTap: () => ref
+                                  .read(repositoryProvider)
+                                  .setImportant(
+                                    shown[i].pkg,
+                                    !shown[i].important,
+                                  ),
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  minHeight: 60,
                                 ),
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(minHeight: 60),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 8,
-                                ),
-                                child: Row(
-                                  children: [
-                                    IconTile(fakeApps[i].icon),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Text(
-                                        fakeApps[i].name,
-                                        style: DText.bodyStrong,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 8,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      AppIcon(
+                                        pkg: shown[i].pkg,
+                                        name: shown[i].name,
                                       ),
-                                    ),
-                                    Switch(
-                                      value: on.contains(fakeApps[i].pkg),
-                                      onChanged: (v) => ref
-                                          .read(importantAppsProvider.notifier)
-                                          .toggle(fakeApps[i].pkg, v),
-                                    ),
-                                  ],
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          shown[i].name,
+                                          style: DText.bodyStrong,
+                                        ),
+                                      ),
+                                      Switch(
+                                        value: shown[i].important,
+                                        onChanged: (v) => ref
+                                            .read(repositoryProvider)
+                                            .setImportant(shown[i].pkg, v),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
-                ),
                 const SizedBox(height: DSpace.section),
               ],
             ),
@@ -96,13 +156,9 @@ class ChooseAppsScreen extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('Baaki apps chhupe rahenge', style: DText.caption),
+                  Text(tr('apps_footer'), style: DText.caption),
                   const SizedBox(height: 10),
-                  DButton(
-                    label: 'Ho gaya',
-                    onPressed: () =>
-                        context.canPop() ? context.pop() : context.go('/home'),
-                  ),
+                  DButton(label: tr('done'), onPressed: _finish),
                 ],
               ),
             ),

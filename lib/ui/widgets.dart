@@ -115,16 +115,19 @@ class DCard extends StatelessWidget {
   final Widget child;
   final EdgeInsets padding;
   final Color color;
+
+  /// A Material (not a DecoratedBox) so ListTile/InkWell children can paint their ink.
   @override
-  Widget build(BuildContext context) => Container(
-    padding: padding,
-    decoration: BoxDecoration(
-      color: color,
-      borderRadius: BorderRadius.circular(DRadius.card),
-      border: color == DColors.card ? Border.all(color: DColors.border) : null,
-    ),
+  Widget build(BuildContext context) => Material(
+    color: color,
     clipBehavior: Clip.antiAlias,
-    child: child,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(DRadius.card),
+      side: color == DColors.card
+          ? const BorderSide(color: DColors.border)
+          : BorderSide.none,
+    ),
+    child: Padding(padding: padding, child: child),
   );
 }
 

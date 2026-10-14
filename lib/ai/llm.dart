@@ -52,6 +52,9 @@ abstract class LlmBackend {
     return extractJsonObject(text);
   }
 
+  /// Stops an in-flight generation (no-op for backends that cannot).
+  void cancel() {}
+
   Future<void> dispose();
 }
 

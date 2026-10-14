@@ -14,9 +14,16 @@ Duration delayUntilNext(DateTime now, int hour, int minute) {
 
 /// Inexact WorkManager scheduling (brief section 8): no exact-alarm permission is needed.
 /// The morning task re-registers itself after each run, so it survives reboots and Doze.
-class Scheduler {
+abstract class AppScheduler {
+  Future<void> scheduleMorning(int hour, int minute, {DateTime? now});
+  Future<void> cancelMorning();
+  Future<void> remindIn(int eventId, {int minutes = 10});
+}
+
+class Scheduler implements AppScheduler {
   const Scheduler();
 
+  @override
   Future<void> scheduleMorning(int hour, int minute, {DateTime? now}) =>
       Workmanager().registerOneOffTask(
         taskMorning,
@@ -25,9 +32,11 @@ class Scheduler {
         existingWorkPolicy: ExistingWorkPolicy.replace,
       );
 
+  @override
   Future<void> cancelMorning() => Workmanager().cancelByUniqueName(taskMorning);
 
   /// "10 min baad yaad dilao".
+  @override
   Future<void> remindIn(int eventId, {int minutes = 10}) =>
       Workmanager().registerOneOffTask(
         '$taskReminder-$eventId',
