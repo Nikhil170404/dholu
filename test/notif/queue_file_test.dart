@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:dholu/native/important_apps_file.dart';
 import 'package:dholu/native/queue_file.dart';
 
 void main() {
@@ -37,4 +38,22 @@ void main() {
     expect(await QueueFile.drain(dir), isEmpty);
     expect(dir.listSync(), isEmpty); // no leftover .processing files
   });
+
+  test(
+    'important apps file is written atomically for the Kotlin listener',
+    () async {
+      final dir = Directory.systemTemp.createTempSync('imp');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      await ImportantAppsFile.write(dir, {'com.whatsapp', 'net.one97.paytm'});
+      final lines = File('${dir.path}/${ImportantAppsFile.fileName}')
+          .readAsLinesSync();
+      expect(lines.toSet(), {'com.whatsapp', 'net.one97.paytm'});
+      expect(dir.listSync().length, 1); // no leftover .tmp
+      await ImportantAppsFile.write(dir, {});
+      expect(
+        File('${dir.path}/${ImportantAppsFile.fileName}').readAsStringSync(),
+        '',
+      );
+    },
+  );
 }

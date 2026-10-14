@@ -89,8 +89,11 @@ class DholuListenerService : NotificationListenerService() {
             // Live path: Dart applies its own (tested) filter before storing anything.
             main.post { sink?.success(json.toString()) }
         } else {
-            // Offline path: never write sensitive text to disk.
-            if (sensitive != null) json.put("text", "").put("title", "")
+            // Offline path: never write sensitive text to disk, and keep text only for apps the
+            // user marked important (everything else is only counted).
+            if (sensitive != null || !ImportantApps.contains(applicationContext, sbn.packageName)) {
+                json.put("text", "").put("title", "")
+            }
             NotificationQueue.append(applicationContext, json)
         }
     }

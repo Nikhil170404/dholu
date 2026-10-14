@@ -13,6 +13,7 @@ import 'core/digest.dart';
 import 'data/database.dart';
 import 'data/repository.dart';
 import 'l10n/strings.dart';
+import 'native/important_apps_file.dart';
 import 'native/native_bridge.dart';
 import 'notif/ingest_service.dart';
 import 'notif/notification_service.dart';
@@ -27,7 +28,10 @@ final databaseProvider = Provider<AppDatabase>((ref) {
 });
 
 final repositoryProvider = Provider<Repository>(
-  (ref) => Repository(ref.watch(databaseProvider)),
+  (ref) => Repository(
+    ref.watch(databaseProvider),
+    onImportantChanged: ImportantAppsFile.writeToAppDir,
+  ),
 );
 
 final trProvider = Provider<Tr>(

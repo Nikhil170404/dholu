@@ -1,8 +1,11 @@
-import 'package:flutter/painting.dart' show Color;
+import 'dart:ui' show Color, DartPluginRegistrant;
+
+import 'package:flutter/widgets.dart' show WidgetsFlutterBinding;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../core/digest.dart';
 import '../l10n/strings.dart';
+import '../work/scheduler.dart';
 
 class DigestContent {
   const DigestContent({
@@ -77,6 +80,18 @@ class NotifPayload {
 
 typedef NotifTapHandler = void Function(String? payload, String? actionId);
 
+/// Runs in a background isolate when a notification action without UI is tapped while the app
+/// is not in the foreground ("Baad mein" -> remind in 10 minutes).
+@pragma('vm:entry-point')
+Future<void> dholuNotificationBackground(NotificationResponse r) async {
+  WidgetsFlutterBinding.ensureInitialized();
+  DartPluginRegistrant.ensureInitialized();
+  final p = NotifPayload.parse(r.payload);
+  if (r.actionId == 'later' && p?.eventId != null) {
+    await const Scheduler().remindIn(p!.eventId!);
+  }
+}
+
 /// What the app needs from the notification layer (lets tests swap in a recorder).
 abstract class AppNotifier {
   Future<void> init(Tr tr, {NotifTapHandler? onTap});
@@ -117,7 +132,8 @@ class NotificationService implements AppNotifier {
       ),
       onDidReceiveNotificationResponse: (r) =>
           onTap?.call(r.payload, r.actionId),
-      onDidReceiveBackgroundNotificationResponse: onBackgroundTap,
+      onDidReceiveBackgroundNotificationResponse:
+          onBackgroundTap ?? dholuNotificationBackground,
     );
     final a = _p
         .resolvePlatformSpecificImplementation<

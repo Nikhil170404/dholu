@@ -30,7 +30,11 @@ void main() {
 
   /// Scrolls [f] fully into view (above the bottom navigation bar) before interacting.
   Future<void> reveal(WidgetTester t, Finder f) async {
-    await t.scrollUntilVisible(f, 200, scrollable: find.byType(Scrollable).first);
+    await t.scrollUntilVisible(
+      f,
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     await t.ensureVisible(f);
     await t.pump();
   }
@@ -58,17 +62,20 @@ void main() {
       },
     );
 
-    testWidgets('online features are off by default; enabling web search reveals provider', (t) async {
-      await boot(t, location: '/settings');
-      await reveal(t, find.text('Web search chalu karo'));
-      expect(find.text('DuckDuckGo'), findsNothing);
-      await t.tap(find.text('Web search chalu karo'));
-      await settle(t);
-      await reveal(t, find.text('DuckDuckGo'));
-      expect(find.text('DuckDuckGo'), findsOneWidget);
-      expect(env.prefs.getBool('webSearch'), isTrue);
-      await done(t);
-    });
+    testWidgets(
+      'online features are off by default; enabling web search reveals provider',
+      (t) async {
+        await boot(t, location: '/settings');
+        await reveal(t, find.text('Web search chalu karo'));
+        expect(find.text('DuckDuckGo'), findsNothing);
+        await t.tap(find.text('Web search chalu karo'));
+        await settle(t);
+        await reveal(t, find.text('DuckDuckGo'));
+        expect(find.text('DuckDuckGo'), findsOneWidget);
+        expect(env.prefs.getBool('webSearch'), isTrue);
+        await done(t);
+      },
+    );
 
     testWidgets('turning the morning summary off cancels the scheduled task', (
       t,
@@ -115,33 +122,52 @@ void main() {
   });
 
   group('model screen', () {
-    testWidgets('8 GB phone: recommends the 2 GB tier; download starts Wi-Fi-only', (t) async {
-      await boot(t, location: '/settings/models');
-      expect(find.text('Dholu Bada (Llama 3.2 3B)'), findsOneWidget);
-      expect(find.text('Dholu ki pasand'), findsOneWidget);
-      expect(find.textContaining('8.0 GB RAM'), findsWidgets);
-      final dl = find.textContaining('Download  ·').first;
-      await reveal(t, dl);
-      await t.tap(dl); // first model = small
-      await settle(t);
-      expect(env.downloader.started, ['gemma3-1b']);
-      expect(env.downloader.wifi, isTrue);
-      await done(t);
-    });
+    testWidgets(
+      '8 GB phone: recommends the 2 GB tier; download starts Wi-Fi-only',
+      (t) async {
+        await boot(t, location: '/settings/models');
+        expect(find.text('Dholu Bada (Llama 3.2 3B)'), findsOneWidget);
+        expect(find.text('Dholu ki pasand'), findsOneWidget);
+        expect(find.textContaining('8.0 GB RAM'), findsWidgets);
+        final dl = find.textContaining('Download  ·').first;
+        await reveal(t, dl);
+        await t.tap(dl); // first model = small
+        await settle(t);
+        expect(env.downloader.started, ['gemma3-1b']);
+        expect(env.downloader.wifi, isTrue);
+        await done(t);
+      },
+    );
 
-    testWidgets('2 GB phone: every model is blocked with a reason, rules mode is selected', (t) async {
-      final e = Env(specs: const DeviceSpecs(totalRamMb: 2048, availRamMb: 700, freeStorageMb: 20000, cores: 4, abis: ['arm64-v8a'], sdk: 30, lowRam: true, soc: '', model: 'Tiny'));
-      await boot(t, e: e, location: '/settings/models');
-      expect(find.textContaining('low-RAM'), findsWidgets);
-      expect(find.text('Dholu ki pasand'), findsNothing);
-      final dl = find.textContaining('Download  ·').first;
-      await reveal(t, dl);
-      final btn = t.widget<InkWell>(find.ancestor(of: dl, matching: find.byType(InkWell)).first);
-      expect(btn.onTap, isNull);
-      expect(find.byIcon(Icons.radio_button_checked_rounded), findsOneWidget);
-      await done(t);
-    });
-
+    testWidgets(
+      '2 GB phone: every model is blocked with a reason, rules mode is selected',
+      (t) async {
+        final e = Env(
+          specs: const DeviceSpecs(
+            totalRamMb: 2048,
+            availRamMb: 700,
+            freeStorageMb: 20000,
+            cores: 4,
+            abis: ['arm64-v8a'],
+            sdk: 30,
+            lowRam: true,
+            soc: '',
+            model: 'Tiny',
+          ),
+        );
+        await boot(t, e: e, location: '/settings/models');
+        expect(find.textContaining('low-RAM'), findsWidgets);
+        expect(find.text('Dholu ki pasand'), findsNothing);
+        final dl = find.textContaining('Download  ·').first;
+        await reveal(t, dl);
+        final btn = t.widget<InkWell>(
+          find.ancestor(of: dl, matching: find.byType(InkWell)).first,
+        );
+        expect(btn.onTap, isNull);
+        expect(find.byIcon(Icons.radio_button_checked_rounded), findsOneWidget);
+        await done(t);
+      },
+    );
   });
 
   group('assistant', () {

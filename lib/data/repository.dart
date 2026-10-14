@@ -16,8 +16,11 @@ class AppRef {
 /// - OTP / bank bodies are never stored (placeholder only)
 /// - everything older than [retention] is deleted.
 class Repository {
-  Repository(this.db);
+  Repository(this.db, {this.onImportantChanged});
   final AppDatabase db;
+
+  /// Called with the new important set after it changes (shared with the Kotlin listener).
+  final Future<void> Function(Set<String>)? onImportantChanged;
 
   static const retention = Duration(days: 7);
 
@@ -153,10 +156,12 @@ class Repository {
       a.pkg,
   };
 
-  Future<void> setImportant(String pkg, bool on) =>
-      (db.update(db.appPrefs)..where((t) => t.pkg.equals(pkg))).write(
-        AppPrefsCompanion(important: Value(on)),
-      );
+  Future<void> setImportant(String pkg, bool on) async {
+    await (db.update(db.appPrefs)..where((t) => t.pkg.equals(pkg))).write(
+      AppPrefsCompanion(important: Value(on)),
+    );
+    await onImportantChanged?.call(await importantPkgs());
+  }
 
   // ---- contacts + learning ----
 
