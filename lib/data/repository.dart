@@ -106,6 +106,8 @@ class Repository {
     await db.delete(db.contacts).go();
   }
 
+  StoredEvent toStoredEvent(NotificationEvent r) => _toStored(r);
+
   StoredEvent _toStored(NotificationEvent r) => StoredEvent(
     id: r.id,
     key: r.key,
@@ -203,5 +205,55 @@ class Repository {
       learned[f.sender] = ((learned[f.sender] ?? 0) + d).clamp(-2.0, 2.0);
     }
     return SenderKnowledge(starred: starred, learned: learned);
+  }
+}
+
+extension RepositoryRefine on Repository {
+  /// Replaces the rules result with a refined one (priority, category, action, summary).
+  Future<void> updateClassification(int id, Classification c) =>
+      (db.update(db.notificationEvents)..where((t) => t.id.equals(id))).write(
+        NotificationEventsCompanion(
+          priority: Value(c.priority.name),
+          category: Value(c.category.name),
+          action: Value(c.action.name),
+          summary: Value(c.summary),
+        ),
+      );
+
+  Future<StoredEvent?> byId(int id) async {
+    final r = await (db.select(
+      db.notificationEvents,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
+    return r == null ? null : toStoredEvent(r);
+  }
+
+  /// Distinct recent senders (for the email "use context" picker), newest first.
+  Future<List<String>> recentSenders({int limit = 20}) async {
+    final rows =
+        await (db.select(db.notificationEvents)
+              ..where((t) => t.textRedacted.equals('').not())
+              ..orderBy([(t) => OrderingTerm.desc(t.ts)])
+              ..limit(200))
+            .get();
+    final seen = <String>[];
+    for (final r in rows) {
+      if (r.sender.trim().isNotEmpty && !seen.contains(r.sender)) {
+        seen.add(r.sender);
+      }
+      if (seen.length >= limit) {
+        break;
+      }
+    }
+    return seen;
+  }
+
+  /// Per-app counts for the "What Dholu knows" screen.
+  Future<Map<String, int>> countsByApp() async {
+    final rows = await db.select(db.notificationEvents).get();
+    final m = <String, int>{};
+    for (final r in rows) {
+      m[r.appName] = (m[r.appName] ?? 0) + 1;
+    }
+    return m;
   }
 }

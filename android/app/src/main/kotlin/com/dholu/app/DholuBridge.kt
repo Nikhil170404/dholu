@@ -2,11 +2,13 @@ package com.dholu.app
 
 import android.app.ActivityManager
 import android.app.ActivityOptions
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.AudioManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
@@ -58,7 +60,7 @@ class DholuBridge(private val ctx: Context, messenger: BinaryMessenger) : Method
                 }
             }
             "isListenerConnected" -> result.success(DholuListenerService.connected)
-            "drainQueue" -> result.success(NotificationQueue.drain(ctx))
+            "isSilentMode" -> result.success(isSilentMode())
             "getInstalledApps" -> worker.execute {
                 val apps = installedApps()
                 main.post { result.success(apps) }
@@ -87,6 +89,14 @@ class DholuBridge(private val ctx: Context, messenger: BinaryMessenger) : Method
         true
     } catch (e: Exception) {
         false
+    }
+
+    /** True when the phone is on silent/vibrate or Do Not Disturb: the drum roll must stay quiet. */
+    private fun isSilentMode(): Boolean {
+        val am = ctx.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        return am.ringerMode != AudioManager.RINGER_MODE_NORMAL ||
+            nm.currentInterruptionFilter != NotificationManager.INTERRUPTION_FILTER_ALL
     }
 
     private fun isAccessGranted(): Boolean {

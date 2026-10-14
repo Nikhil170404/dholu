@@ -26,12 +26,22 @@ class Refiner {
   }
 
   /// Returns the refined classification, or null to keep the rules result.
+  /// [alreadyJudgedUncertain]: the caller decided this item is uncertain when the rules score was
+  /// still known (scores are not stored, so a re-loaded row cannot be re-judged by score).
   Future<Classification?> refine(
     RawNotification n,
     Classification rules,
-    LlmBackend local,
-  ) async {
-    if (!local.isLocal || !isUncertain(rules)) {
+    LlmBackend local, {
+    bool alreadyJudgedUncertain = false,
+  }) async {
+    if (!local.isLocal) {
+      return null;
+    }
+    final neverRefine =
+        rules.category == Category.otp ||
+        rules.category == Category.bank ||
+        rules.category == Category.promo;
+    if (neverRefine || (!alreadyJudgedUncertain && !isUncertain(rules))) {
       return null;
     }
     final body = '${n.title}: ${n.text}';

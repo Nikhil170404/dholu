@@ -1,12 +1,17 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/types.dart';
+
+import 'package:path_provider/path_provider.dart';
+
 import '../data/repository.dart';
+import 'queue_file.dart';
 
 class DeviceSpecs {
   const DeviceSpecs({
@@ -72,6 +77,9 @@ abstract class NativeBridge {
   Future<bool> openBatterySettings();
   Future<bool> requestRebind();
   Future<bool> isListenerConnected();
+
+  /// Silent/vibrate or Do Not Disturb: the drum roll must stay quiet.
+  Future<bool> isSilentMode();
   Stream<RawNotification> notifications();
   Future<List<RawNotification>> drainQueue();
   Future<List<AppRef>> installedApps();
@@ -128,12 +136,15 @@ class AndroidNativeBridge implements NativeBridge {
       _e.receiveBroadcastStream().map((e) => decodeNotification(e as String));
 
   @override
+  Future<bool> isSilentMode() async =>
+      await _call<bool>('isSilentMode') ?? false;
+
+  /// Read straight from the app files dir, so it also works in the WorkManager isolate
+  /// (which has no MainActivity channel).
+  @override
   Future<List<RawNotification>> drainQueue() async {
-    final lines = await _call<List<dynamic>>('drainQueue') ?? const [];
-    return [
-      for (final l in lines)
-        if (l is String) decodeNotification(l),
-    ];
+    final dir = await getApplicationSupportDirectory();
+    return QueueFile.drain(Directory(dir.path));
   }
 
   @override
@@ -201,6 +212,9 @@ class FakeNativeBridge implements NativeBridge {
   Future<bool> requestRebind() async => true;
   @override
   Future<bool> isListenerConnected() async => granted;
+  bool silent = false;
+  @override
+  Future<bool> isSilentMode() async => silent;
   @override
   Stream<RawNotification> notifications() => _ctrl.stream;
   @override
