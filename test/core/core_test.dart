@@ -112,7 +112,10 @@ void main() {
       expect(r.summary, 'Bijli bill kal due');
     });
     test('dd/mm due date', () {
-      final r = c.classifySync(n('Paytm', 'Recharge due 15/10', pkg: 'p', msg: false), now);
+      final r = c.classifySync(
+        n('Paytm', 'Recharge due 15/10', pkg: 'p', msg: false),
+        now,
+      );
       expect(r.summary, contains('kal due'));
     });
     test('promo is junk', () {
